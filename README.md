@@ -79,3 +79,8 @@ python bot.py
 * [UnityPy](https://github.com/K0lb3/UnityPy) —— Unity 资源解析
 * [NoneBot2](https://github.com/nonebot/nonebot2) / [NapCat](https://github.com/NapNeko/NapCatQQ) —— 机器人框架与 QQ 网关
 * 崩坏学园2 官方数据站（`benghuai.com/data`）—— 精英技能、僵尸娘、官网 CG 的公开资料
+
+## 参与贡献
+
+欢迎提 Issue 与 PR：请先看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+不要提交游戏素材与账号凭据（.gitignore 已排除，PR 里带上会被关闭）。
