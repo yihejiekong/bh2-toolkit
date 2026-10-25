@@ -28,7 +28,10 @@ RE_CMD = re.compile(r'^群龙王$')
 async def _count(event: MessageEvent):
     if not isinstance(event, GroupMessageEvent):
         return
-    if not event.get_plaintext().strip() and len(event.get_message()) <= 1:
+    text = event.get_plaintext().strip()
+    if RE_CMD.match(text):          # 「群龙王」本身不计入发言数
+        return
+    if not text and len(event.get_message()) <= 1:
         return
     DC.incr(event.group_id, event.get_user_id())
 
