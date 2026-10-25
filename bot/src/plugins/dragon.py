@@ -7,7 +7,7 @@
 import re
 
 from nonebot import get_bots, on_message, require
-from nonebot.adapters.onebot.v11 import GroupMessageEvent, Message, MessageEvent
+from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Message, MessageEvent
 
 from . import _media
 from . import _dragon_card as DC
@@ -34,7 +34,7 @@ async def _count(event: MessageEvent):
 
 
 @board.handle()
-async def _board(event: MessageEvent):
+async def _board(bot: Bot, event: MessageEvent):
     if not isinstance(event, GroupMessageEvent):
         return
     if not RE_CMD.match(event.get_plaintext().strip()):
@@ -42,7 +42,7 @@ async def _board(event: MessageEvent):
     if not _switch.is_on(event.group_id, 'dragon'):
         return
     try:
-        png, n = await DC.render_board(event.bot, event.group_id)
+        png, n = await DC.render_board(bot, event.group_id)
     except Exception as e:  # noqa: BLE001
         await board.finish('排行榜生成失败：%s' % e)
         return
