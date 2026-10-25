@@ -1,0 +1,14 @@
+[Unit]
+Description=NapCat watchdog (docker container + QQ process + 6099 port)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'while true; do /usr/local/bin/napcat-guard.sh; sleep 60; done'
+Restart=always
+RestartSec=10
+Nice=5
+
+[Install]
+WantedBy=multi-user.target

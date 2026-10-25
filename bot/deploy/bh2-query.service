@@ -1,0 +1,21 @@
+[Unit]
+Description=BH2 player card query service (long-lived game gateway session)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/bh2-bot/src/plugins/player
+Environment=BH2_SERVERS=/opt/bh2-bot/servers.json
+Environment=BH2_QUERY_BIND=127.0.0.1
+Environment=BH2_QUERY_PORT=8791
+Environment=BH2_KEEPALIVE=15
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/bh2-bot/venv/bin/python service.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

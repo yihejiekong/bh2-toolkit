@@ -1,0 +1,7 @@
+# 解包与卡面脚本的依赖
+UnityPy==1.20.10
+pycryptodome>=3.20
+lz4>=4.3
+pillow>=10.0
+openpyxl>=3.1
+requests>=2.31

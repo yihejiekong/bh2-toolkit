@@ -1,0 +1,73 @@
+# bh2-toolkit · 崩坏学园2 素材工具链与 QQ 机器人
+
+把「解包 → 素材 → 卡面 → 机器人」这条链路完整跑通的一套脚本：
+从客户端资源里取出配置表与美术资源，做成图鉴卡、技能卡、僵尸娘资料卡，
+再挂到一个 NoneBot2 + NapCat 的 QQ 机器人上。
+
+> 本项目**不包含**任何游戏原始资源、账号凭据或服务器信息。
+> 所有素材都需要你自己从**自己设备上安装的客户端**里导出；
+> `.gitignore` 已经把素材目录、数据库、抓包与凭据文件排除在外。
+
+## 目录
+
+```
+docs/     文档：解包、图鉴表、卡面制作、机器人部署、玩家名片协议
+unpack/   解包与素材导出（APK / AssetBundle / TSV / 纹理 / 立绘 / 图集）
+cards/    卡面生成（装备卡 / 服装卡 / 徽章卡 / 使魔卡 / 角色卡 / 技能卡 / 僵尸娘）
+bot/      NoneBot2 插件与部署文件
+```
+
+> 仓库里不放任何游戏美术资源与成图，卡面都是你本地跑脚本产出的。
+
+## 快速开始
+
+```bash
+git clone <this repo> && cd bh2-toolkit
+pip install -r requirements.txt
+
+# 1) 解包（需要自备 APK 或从设备拉取热更资源）
+python unpack/apk_extract.py
+python unpack/bundle_decrypt.py
+python unpack/export_tables.py
+
+# 2) 出卡（需要一张列名对齐的图鉴表，见 docs/02）
+python cards/batch.py --ids 897
+python cards/build_zombie.py 57
+
+# 3) 起机器人
+cd bot && cp .env.example .env && pip install -r requirements.txt
+python bot.py
+```
+
+## 文档索引
+
+| 文档 | 内容 |
+|---|---|
+| [docs/01-解包与素材提取.md](docs/01-解包与素材提取.md) | APK → AssetBundle → GGZV2 → TSV / 纹理 / 立绘 / 表情 / 服装图集 |
+| [docs/02-图鉴表构建.md](docs/02-图鉴表构建.md) | 图鉴表字段、数值换算（满级/满破）、文本清洗、已知的坑 |
+| [docs/03-卡面与素材制作.md](docs/03-卡面与素材制作.md) | HTML+截图出图、模板差异、批量、精英技能与僵尸娘的合并动图 |
+| [docs/04-QQ机器人部署.md](docs/04-QQ机器人部署.md) | NapCat + NoneBot2 + systemd + 守护脚本 + 插件命令表 |
+| [docs/05-玩家名片协议.md](docs/05-玩家名片协议.md) | 帧格式、校验算法、命令表、抓包取参、载荷解析 |
+
+## 主要特性
+
+* **纯 Python 解包**：13.4+ 的资源包（AES-CBC + 16 字节尾的 GGZV2）直接挂进 UnityPy；
+* **卡面统一模板**：属性块 / 技能条 / 觉醒块 / 词条行，四类装备共用一套 CSS；
+* **批量引擎**：并发 headless 截图、按背景色裁底、逐张校验有没有被裁；
+* **不刷屏的素材推送**：多技能内容永远只发「一张卡 + 一张合并动图」；
+* **常驻协议会话**：玩家名片查询登录一次长期复用，带心跳与断线重连。
+
+## 许可与声明
+
+* 代码 MIT。游戏内容（名称、图标、立绘、文本）版权归 miHoYo 所有，
+  仓库不附带任何游戏资源，请勿分发。
+* 解包与协议研究仅用于学习与个人使用，请遵守游戏用户协议；
+  使用脚本登录账号存在风控风险，后果自负。
+* GGZV2 解密算法来自社区逆向整理（Modder4869 / StudioDev 等），
+  本项目只做 Python 适配。
+
+## 致谢
+
+* [UnityPy](https://github.com/K0lb3/UnityPy) —— Unity 资源解析
+* [NoneBot2](https://github.com/nonebot/nonebot2) / [NapCat](https://github.com/NapNeko/NapCatQQ) —— 机器人框架与 QQ 网关
+* 崩坏学园2 官方数据站（`benghuai.com/data`）—— 精英技能、僵尸娘、官网 CG 的公开资料

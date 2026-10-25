@@ -1,0 +1,31 @@
+# 忽略：素材、数据、凭据
+materials/
+data/
+build/
+tables/
+
+# 凭据与本地配置
+.env
+servers.json
+*.pcap
+*.pcapng
+cookie.txt
+
+# 数据库
+*.db
+*.db-journal
+*.db-wal
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*_cache/
