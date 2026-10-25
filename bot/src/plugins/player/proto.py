@@ -72,9 +72,18 @@ class Server:
         self.name = name
         self.host = host
         self.port = PORT
-        self.session = bytes.fromhex(session_hex)
+        try:
+            self.session = bytes.fromhex(session_hex)
+        except ValueError:
+            raise RuntimeError('区服 %s 的 session 不是合法的十六进制：%r' % (key, session_hex))
         self.own_uid = int(own_uid, 0) if isinstance(own_uid, str) else own_uid
-        self.login_frame = bytes.fromhex(login_hex)
+        try:
+            self.login_frame = bytes.fromhex(login_hex)
+        except ValueError:
+            raise RuntimeError(
+                '区服 %s 的 login_hex 不是合法的十六进制串。\n'
+                '它应该是抓包里那一帧 0x0001 登录帧的完整字节（含 38 字节头尾），'
+                '而不是说明文字。见 docs/05-玩家名片协议.md' % key)
 
     # ---- 组帧 ----
     def build(self, cmd, payload, f2=0xEA60, ts=None):
@@ -121,16 +130,29 @@ def _conf_path():
 
 
 def load_servers():
-    """读 servers.json；文件不存在就返回空字典（调用方负责给出提示）。"""
+    """读 servers.json；文件不存在就返回空字典（调用方负责给出提示）。
+
+    两种写法都支持：
+        {"b2": {...}, "gf": {...}}
+        {"default": "b2", "servers": {"b2": {...}}}
+    """
     path = _conf_path()
     if not os.path.exists(path):
         return {}
     with open(path, encoding='utf-8') as f:
         conf = json.load(f)
+    if isinstance(conf.get('servers'), dict):
+        conf = conf['servers']
     out = {}
     for key, v in conf.items():
-        out[key] = Server(key, v.get('name', key), v['host'], v['session'],
-                          v['own_uid'], v['login_hex'])
+        if not isinstance(v, dict) or 'host' not in v:
+            continue
+        try:
+            out[key] = Server(key, v.get('name', key), v['host'], v['session'],
+                              v['own_uid'], v['login_hex'])
+        except (KeyError, RuntimeError, ValueError) as e:
+            # 某个区服没配好不该让整个插件加载失败
+            print('[bh2-proto] 跳过区服 %s：%s' % (key, e))
     return out
 
 
