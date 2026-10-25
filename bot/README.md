@@ -6,6 +6,7 @@ pyproject.toml         nonebot 配置（插件目录 src/plugins）
 requirements.txt       nonebot2 / onebot v11 / apscheduler / httpx / pillow
 .env.example           环境变量样例（复制成 .env）
 src/plugins/           13 个功能插件 + 若干公共模块
+tools/import_db.py     建库：图鉴表 → bh2.db（equip / illust / illust_equip）
 deploy/                systemd 单元与 NapCat 守护脚本
 ```
 
@@ -36,6 +37,8 @@ deploy/                systemd 单元与 NapCat 守护脚本
 ```bash
 pip install -r requirements.txt
 cp .env.example .env      # 填 ACCESS_TOKEN / BOT_ADMINS / MATERIAL_ROOT
+
+python tools/import_db.py # 建库（装备查询/猜装备/立绘查询依赖它）
 python bot.py
 ```
 
@@ -55,6 +58,7 @@ NapCat 守护见 `deploy/napcat-guard.sh` + `napcat-guard.service`。
 
 完整步骤（含 NapCat Docker、字体、素材同步）见
 [../docs/04-QQ机器人部署.md](../docs/04-QQ机器人部署.md)，
+功能清单与逐步搭建见 [../docs/使用说明.md](../docs/使用说明.md)，
 玩家名片的协议细节见 [../docs/05-玩家名片协议.md](../docs/05-玩家名片协议.md)。
 
 ## 注意
