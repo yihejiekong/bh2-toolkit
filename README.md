@@ -1,5 +1,12 @@
 # bh2-toolkit · 崩坏学园2 素材工具链与 QQ 机器人
 
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-2ea44f.svg)](LICENSE)
+[![NoneBot2](https://img.shields.io/badge/NoneBot2-2.x-1f6feb.svg)](https://nonebot.dev/)
+[![NapCat](https://img.shields.io/badge/NapCat-QQ%20gateway-2496ed.svg)](https://github.com/NapNeko/NapCatQQ)
+[![Stars](https://img.shields.io/github/stars/yihejiekong/bh2-toolkit?style=social)](https://github.com/yihejiekong/bh2-toolkit/stargazers)
+[![CI](https://github.com/yihejiekong/bh2-toolkit/actions/workflows/python.yml/badge.svg)](https://github.com/yihejiekong/bh2-toolkit/actions/workflows/python.yml)
+
 把「解包 → 素材 → 卡面 → 机器人」这条链路完整跑通的一套脚本：
 从客户端资源里取出配置表与美术资源，做成图鉴卡、技能卡、僵尸娘资料卡，
 再挂到一个 NoneBot2 + NapCat 的 QQ 机器人上。

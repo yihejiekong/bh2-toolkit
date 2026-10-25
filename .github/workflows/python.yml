@@ -1,0 +1,39 @@
+name: python
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: py${{ matrix.python }} · compile
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Byte-compile everything
+        run: python -m compileall -q unpack cards bot
+
+      - name: Import smoke test
+        run: |
+          cd cards && python -c "import paths as P; print('browser:', P.BROWSER); print('tables:', P.TABLES)"
+          cd ../unpack && python -c "import gzzv2; print('gzzv2 ok')"
