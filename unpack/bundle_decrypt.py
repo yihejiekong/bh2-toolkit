@@ -1,5 +1,9 @@
 """Decrypt bh2 data_all.unity3d (AES-CBC) and export TextAsset config tables.
 
+⚠ 仅适用于 13.4.1 及更早版本。13.4.8 起数据块换成了 GGZV2（见 gzzv2.py），
+本脚本在新包上会解出乱码，请改用 `python unpack/export_tables.py`
+（内部已经 `import gzzv2; gzzv2.install()`）。
+
 Cipher chain reverse-engineered locally:
   stage 1 (whole file): AES-256-CBC, key/iv from hg2_data_extractor.config
   stage 2 (per UnityFS compression block, v>=11.7): AES-CBC key=b"LPC@a*&^b19b61l/", iv=16*NUL  -> LZ4HC block

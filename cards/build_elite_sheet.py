@@ -4,19 +4,50 @@
 import io
 import json
 import os
+import shutil
 import subprocess
 
 from PIL import Image
 import paths as P
 
 BASE = P.BUILD
+MAT = os.path.join(P.MATERIALS, '精英技能')
 ICON = os.path.join(BASE, 'elite_icons')
 HTML = os.path.join(BASE, 'elite_sheet.html')
-PNG = os.path.join(BASE, '精英技能汇总.png')
+PNG = os.path.join(MAT, '精英技能汇总.png')
 EDGE = P.BROWSER
 
-d = json.loads(io.open(os.path.join(BASE, 'elite_skill.json'), encoding='utf-8').read())
+# 清单：优先 materials（build_skill_card.py --fetch 的落点），兼容早期放在 BUILD 的
+_LIST = [os.path.join(MAT, 'elite_skill.json'),
+         os.path.join(BASE, 'elite_skill.json')]
+for _p in _LIST:
+    if os.path.exists(_p):
+        break
+else:
+    raise SystemExit('缺少 elite_skill.json，先跑：python build_skill_card.py --fetch')
+
+d = json.loads(io.open(_p, encoding='utf-8').read())
 d.sort(key=lambda x: int(x['id']))
+
+# 图标：统一拷到 BUILD/elite_icons（HTML 里用相对路径，必须和 html 同目录）
+os.makedirs(ICON, exist_ok=True)
+os.makedirs(MAT, exist_ok=True)
+_miss = []
+for _x in d:
+    _src = None
+    for _cand in (os.path.join(MAT, '%s.png' % _x['id']),
+                  os.path.join(BASE, 'elite_icons', '%s.png' % _x['id'])):
+        if os.path.exists(_cand):
+            _src = _cand
+            break
+    if not _src:
+        _miss.append(_x['id'])
+        continue
+    _dst = os.path.join(ICON, '%s.png' % _x['id'])
+    if not os.path.exists(_dst):
+        shutil.copyfile(_src, _dst)
+if _miss:
+    raise SystemExit('缺图标 %s，先跑：python build_skill_card.py --fetch' % _miss[:10])
 
 COLS = 6
 CELL_W, CELL_H, GAP = 148, 176, 12
@@ -82,5 +113,8 @@ while y > 0:
     if any(abs(p[0] - bg[0]) + abs(p[1] - bg[1]) + abs(p[2] - bg[2]) > 12 for p in row):
         break
     y -= 1
-im.crop((0, 0, w, min(h, y + 26))).save(PNG)
-print('png', Image.open(PNG).size, os.path.getsize(PNG))
+out = im.crop((0, 0, w, min(h, y + 26)))
+# 2x 全彩 PNG 有 2 MB，量化到 256 色后约 540 KB，1:1 看几乎没差别
+out.convert('P', palette=Image.ADAPTIVE, colors=256).save(PNG, optimize=True)
+print('png', Image.open(PNG).size, os.path.getsize(PNG),
+      '(%.0f KB)' % (os.path.getsize(PNG) / 1024))

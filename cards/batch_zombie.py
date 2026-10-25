@@ -12,7 +12,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-import build_zombie2 as B
+import build_zombie as B
 import paths as P
 
 MAT = os.path.join(P.MATERIALS, '僵尸娘')
@@ -26,9 +26,6 @@ PROF = os.path.join(B.BASE, 'zombie_work', '_profile')
 NPROC = 4
 
 order = sorted(B.DATA.values(), key=lambda z: -int(z['id']))
-
-_slot = {'i': 0}
-
 
 def slot_dir():
     """线程内拿一个 profile 目录（用线程 id 取模即可）。"""
@@ -45,6 +42,13 @@ _ORIG_RUN = B.subprocess.run
 def run_edge(cmd, **kw):
     if cmd and str(cmd[0]).lower().endswith('msedge.exe'):
         cmd = list(cmd) + ['--user-data-dir=' + slot_dir(), '--no-sandbox']
+        kw.setdefault('timeout', 240)
+        r = _ORIG_RUN(cmd, **kw)
+        if getattr(r, 'returncode', 0) not in (0, None):
+            # Edge 偶尔会以 rc=21 退出且不出图，把 stderr 尾巴打出来便于排查
+            print('  edge rc=%s %s' % (r.returncode,
+                                       (r.stderr or b'')[-300:]), flush=True)
+        return r
     return _ORIG_RUN(cmd, **kw)
 
 
@@ -53,7 +57,17 @@ B.subprocess.run = run_edge
 
 def work(z):
     zid = int(z['id'])
-    card = B.build_card(z)
+    card = None
+    for attempt in range(1, 4):
+        try:
+            card = B.build_card(z)
+            break
+        except Exception as e:  # noqa: BLE001
+            print('  ! card fail %d/%d %s %s' % (attempt, 3, z['name'], repr(e)[:120]),
+                  flush=True)
+            time.sleep(2)
+    if not card:
+        raise RuntimeError('三次都没能渲染出卡片：%s' % z['name'])
     cname = 'zombie_%03d.png' % zid
     shutil.copyfile(card, os.path.join(CARDS, cname))
     shutil.copyfile(B.dl(z['icon'], 'icon_%s.png' % z['id']),

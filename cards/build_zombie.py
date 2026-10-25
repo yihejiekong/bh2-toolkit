@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""僵尸娘样例 v2：资料卡 + 合并演示动图（PIL 画标签，宽 360 / 96 色 / 隔帧 → ~1.7MB）。
+"""僵尸娘资料卡 + 合并演示动图（PIL 画标签，宽 360 / 96 色 / 隔帧 → 约 1.7MB）。
 
-用法：python build_zombie2.py [id]
+用法：python build_zombie.py [id]        # 第一次跑会自动拉清单与素材
 """
 
 import io
@@ -26,8 +26,50 @@ UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120',
 os.makedirs(WORK, exist_ok=True)
 os.makedirs(OUT, exist_ok=True)
 
+LIST_FILE = os.path.join(BASE, 'zombie_all.json')
+API_LIST = 'https://www.benghuai.com/data/getData'
+API_ONE = 'https://www.benghuai.com/data/getDataByID'
+
+
+def fetch_all():
+    """从官网数据站拉全部僵尸娘（列表 + 每只的详情），缓存成 zombie_all.json。"""
+    import time
+
+    body = urllib.parse.urlencode({'type': 'zombie',
+                                   'page_num': 1, 'page_size': 500}).encode()
+    req = urllib.request.Request(API_LIST, data=body, headers=UA)
+    data = json.loads(urllib.request.urlopen(req, timeout=30).read().decode('utf-8'))
+    brief = data.get('data') or data.get('list') or []
+    if not brief:
+        raise SystemExit('接口没返回数据：%s' % str(data)[:200])
+
+    out = []
+    for i, b in enumerate(sorted(brief, key=lambda x: int(x['id'])), 1):
+        zid = int(b['id'])
+        body = urllib.parse.urlencode({'id': zid, 'type': 'zombie'}).encode()
+        req = urllib.request.Request(API_ONE, data=body, headers=UA)
+        detail = json.loads(urllib.request.urlopen(req, timeout=30).read().decode('utf-8'))
+        item = detail.get('data') or detail
+        item.setdefault('id', zid)
+        item.setdefault('name', b.get('name'))
+        item.setdefault('icon', b.get('icon'))
+        item.setdefault('skills', [])
+        out.append(item)
+        print('  %2d/%d %s' % (i, len(brief), item['name']), flush=True)
+        time.sleep(0.15)
+
+    io.open(LIST_FILE, 'w', encoding='utf-8').write(
+        json.dumps(out, ensure_ascii=False, indent=1))
+    print('清单 %d 只 -> %s' % (len(out), LIST_FILE))
+    return out
+
+
+if not os.path.exists(LIST_FILE):
+    print('没有找到 %s，先从官网拉一次清单……' % LIST_FILE)
+    fetch_all()
+
 DATA = {int(x['id']): x for x in
-        json.loads(io.open(os.path.join(BASE, 'zombie_all.json'), encoding='utf-8').read())}
+        json.loads(io.open(LIST_FILE, encoding='utf-8').read())}
 
 # ---------- 资料卡 ----------
 TPL = """<!doctype html><html><head><meta charset="utf-8"><style>

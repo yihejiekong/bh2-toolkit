@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """生成单个精英技能的「技能效果 + 生存指南」卡，并下载其 GIF 演示。
 
-用法：python build_skill_card.py <编号> [<编号> ...]
+用法：python build_skill_card.py --fetch        # 先拉清单与图标（新克隆必做一次）
+      python build_skill_card.py <编号> [...]   # 再渲染单卡
 """
 
 import io
@@ -27,7 +28,11 @@ UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120',
 os.makedirs(GIFDIR, exist_ok=True)
 os.makedirs(OUT, exist_ok=True)
 
-DATA = json.loads(io.open(os.path.join(MAT, 'elite_skill.json'), encoding='utf-8').read())
+# 清单不存在时提示先跑 --fetch（新克隆的场景）
+_LIST = os.path.join(MAT, 'elite_skill.json')
+if not os.path.exists(_LIST):
+    raise SystemExit('缺少 %s，先跑：python build_skill_card.py --fetch' % _LIST)
+DATA = json.loads(io.open(_LIST, encoding='utf-8').read())
 BY = {int(x['id']): x for x in DATA}
 
 TPL = """<!doctype html><html><head><meta charset="utf-8"><style>
@@ -126,7 +131,62 @@ def render(sid):
     return png, gif
 
 
+# --------------------------------------------------------------------------
+# --fetch：从官网数据站拉「精英技能」清单与图标，落到 materials/精英技能/
+# --------------------------------------------------------------------------
+API = 'https://www.benghuai.com/data/getData'
+IMG = ('http://static.image.mihoyo.com/hsod2_webview/images/broadcast_top/'
+       'map_icon/picture/properties/')
+
+
+def fetch():
+    """拉 58 项精英技能的 name / skill_desc / guide / tips / icon / display_img。"""
+    import urllib.parse
+
+    body = urllib.parse.urlencode({'type': 'elite_skill',
+                                   'page_num': 1, 'page_size': 500}).encode()
+    req = urllib.request.Request(API, data=body, headers=UA)
+    data = json.loads(urllib.request.urlopen(req, timeout=30).read().decode('utf-8'))
+    items = data.get('data') or data.get('list') or []
+    if not items:
+        raise SystemExit('接口没返回数据：%s' % str(data)[:200])
+    items = sorted(items, key=lambda x: int(x['id']))
+
+    os.makedirs(MAT, exist_ok=True)
+    io.open(os.path.join(MAT, 'elite_skill.json'), 'w', encoding='utf-8').write(
+        json.dumps(items, ensure_ascii=False, indent=1))
+    print('清单 %d 项 -> elite_skill.json' % len(items))
+
+    ok = bad = 0
+    for it in items:
+        icon = (it.get('icon') or '').strip()
+        if not icon:
+            continue
+        url = icon.replace('\\', '/')
+        if url.startswith('//'):
+            url = 'http:' + url
+        elif not url.startswith('http'):
+            url = IMG + os.path.basename(url)
+        url = urllib.parse.quote(url, safe=':/?&=%')
+        dst = os.path.join(MAT, '%s.png' % it['id'])
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            blob = urllib.request.urlopen(req, timeout=30).read()
+            open(dst, 'wb').write(blob)
+            ok += 1
+        except Exception as e:  # noqa: BLE001
+            bad += 1
+            print('  icon fail', it['id'], repr(e)[:80])
+    print('图标 ok=%d fail=%d -> %s' % (ok, bad, MAT))
+
+
 if __name__ == '__main__':
-    ids = [int(a) for a in sys.argv[1:]] or [1]
+    args = sys.argv[1:]
+    if '--fetch' in args:
+        fetch()
+        args = [a for a in args if a != '--fetch']
+        if not args:
+            sys.exit(0)
+    ids = [int(a) for a in args] or [1]
     for i in ids:
         render(i)

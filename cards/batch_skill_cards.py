@@ -7,9 +7,9 @@ import os
 import shutil
 import sys
 
-sys.path.insert(0, P.BUILD)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import paths as P  # noqa: E402
 import build_skill_card as B  # noqa: E402
-import paths as P
 
 CARDS = os.path.join(B.MAT, 'cards')
 os.makedirs(CARDS, exist_ok=True)

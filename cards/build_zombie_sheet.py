@@ -9,7 +9,7 @@ import subprocess
 
 from PIL import Image
 
-import build_zombie2 as B
+import build_zombie as B
 import paths as P
 
 MAT = os.path.join(P.MATERIALS, '僵尸娘')
